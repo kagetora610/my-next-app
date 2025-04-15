@@ -1,36 +1,47 @@
 # .github/workflows/docker-build.yml
 
-name: Docker Build # ワークフローの名前
+name: Docker Build and Push to GHCR # 名前を少し変更 (任意)
 
-on: # トリガー
+on:
   push:
-    branches: [ main ] # mainブランチへのpush時に実行
-  pull_request:
-    branches: [ main ] # mainブランチへのPR時にも実行 (ビルド可能かチェック)
+    branches: [ main ]
+  # pull_request時はビルドのみにしたい場合、トリガーを分けるか条件分岐が必要だが、
+  # 今回はシンプルに push 時のみプッシュするように変更
+  # pull_request:
+  #   branches: [ main ]
 
 jobs:
-  build: # ジョブID
-    runs-on: ubuntu-latest # 実行環境
+  build-and-push: # ジョブIDも変更 (任意)
+    runs-on: ubuntu-latest
+
+    # ★★★ GITHUB_TOKEN に書き込み権限を付与 ★★★
+    permissions:
+      contents: read # コードの読み取り権限 (checkoutに必要)
+      packages: write # GHCRへの書き込み権限 (pushに必要)
 
     steps:
-      - name: Checkout code # コードをチェックアウト
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # Docker Buildx のセットアップ (より高度なビルド機能を利用可能にする)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Dockerイメージのビルド (まだプッシュはしない)
-      # ここではGitHub Container Registry (GHCR) を使うことを想定してイメージ名を付けています
-      # ghcr.io/YOUR_USERNAME/YOUR_REPOSITORY:latest の形式
-      # YOUR_USERNAME と YOUR_REPOSITORY はご自身のものに置き換えてください
-      - name: Build Docker image
+      # ★★★ GHCRへのログインステップを追加 ★★★
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} # ワークフローを実行したユーザー名
+          password: ${{ secrets.GITHUB_TOKEN }} # 自動的に生成されるトークン
+
+      # docker/build-push-action の設定を修正
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: . # Dockerfileがある場所
-          file: ./Dockerfile # Dockerfileのパス
-          push: false # ここではビルドのみ行い、プッシュはしない
-          tags: ghcr.io/kagetora610/my-next-app:latest # イメージ名:タグ (ghcr.io/ユーザー名/リポジトリ名:タグ)
-          # ビルドキャッシュを活用して高速化 (GitHub Actionsキャッシュを使用)
+          context: .
+          file: ./Dockerfile
+          # ★★★ push: true に変更 ★★★
+          push: true
+          tags: ghcr.io/kagetora610/my-next-app:latest # ★ご自身のユーザー名/リポジトリ名に要変更★
           cache-from: type=gha
           cache-to: type=gha,mode=max
