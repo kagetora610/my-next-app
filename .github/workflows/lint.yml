@@ -1,0 +1,28 @@
+# .github/workflows/simple-lint.yml (例)
+
+name: Lint Check # ワークフローの名前 (GitHubのActionsタブに表示される)
+
+on: # このワークフローをいつ実行するか (トリガー)
+  push: # pushイベントが発生した時
+    branches: [ main ] # mainブランチへのpushのみ
+  pull_request: # pull requestイベントが発生した時
+    branches: [ main ] # mainブランチへのpull requestのみ
+
+jobs: # 実行するジョブ (複数のジョブを定義できる)
+  lint: # ジョブID (任意の名前)
+    runs-on: ubuntu-latest # ジョブを実行する環境 (仮想マシン) を指定
+
+    steps: # ジョブ内で実行されるステップ (順番に実行される)
+      - name: Checkout code # ステップの名前
+        uses: actions/checkout@v4 # リポジトリのコードを仮想マシンにチェックアウトするアクション
+
+      - name: Set up Node.js # ステップの名前
+        uses: actions/setup-node@v4 # Node.js環境をセットアップするアクション
+        with: # アクションに渡すパラメータ
+          node-version: '20' # 使用するNode.jsのバージョン
+
+      - name: Install dependencies # ステップの名前
+        run: npm ci # package-lock.jsonに基づいて依存関係をインストール (npm installより高速で確実)
+
+      - name: Run ESLint # ステップの名前
+        run: npm run lint # package.jsonに定義されたlintスクリプトを実行
