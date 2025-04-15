@@ -1,0 +1,36 @@
+# .github/workflows/docker-build.yml
+
+name: Docker Build # ワークフローの名前
+
+on: # トリガー
+  push:
+    branches: [ main ] # mainブランチへのpush時に実行
+  pull_request:
+    branches: [ main ] # mainブランチへのPR時にも実行 (ビルド可能かチェック)
+
+jobs:
+  build: # ジョブID
+    runs-on: ubuntu-latest # 実行環境
+
+    steps:
+      - name: Checkout code # コードをチェックアウト
+        uses: actions/checkout@v4
+
+      # Docker Buildx のセットアップ (より高度なビルド機能を利用可能にする)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Dockerイメージのビルド (まだプッシュはしない)
+      # ここではGitHub Container Registry (GHCR) を使うことを想定してイメージ名を付けています
+      # ghcr.io/YOUR_USERNAME/YOUR_REPOSITORY:latest の形式
+      # YOUR_USERNAME と YOUR_REPOSITORY はご自身のものに置き換えてください
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: . # Dockerfileがある場所
+          file: ./Dockerfile # Dockerfileのパス
+          push: false # ここではビルドのみ行い、プッシュはしない
+          tags: ghcr.io/kagetora610/my-next-app:latest # イメージ名:タグ (ghcr.io/ユーザー名/リポジトリ名:タグ)
+          # ビルドキャッシュを活用して高速化 (GitHub Actionsキャッシュを使用)
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
