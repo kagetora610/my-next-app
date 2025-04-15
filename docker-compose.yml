@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  nextjs-dev:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+    environment:
+      - NEXT_PUBLIC_APP_NAME=My_Dev_Next_App
+      - WATCHPACK_POLLING=true # <--- これを追加
+    command: npm run dev
